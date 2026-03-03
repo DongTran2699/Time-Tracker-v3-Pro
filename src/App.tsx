@@ -117,6 +117,9 @@ export default function App() {
     }
 
     setLoggedInUser(user);
+    if (isOwner(user)) {
+      setIsAdmin(true);
+    }
     setLoginError('');
     setShowPasswordInput(false);
     setLoginPassword('');
@@ -1137,7 +1140,7 @@ export default function App() {
                               currency: member.currency || 'VND'
                             });
                           }}
-                          className="p-1 text-gray-300 hover:text-black dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                          className="p-1 text-gray-300 hover:text-black dark:hover:text-white transition-colors"
                           title="Chỉnh sửa"
                         >
                           <Settings size={12} />
@@ -1146,10 +1149,16 @@ export default function App() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate">{member.role}</p>
-                      {isAdmin && member.hourly_rate && (
-                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
-                          {member.hourly_rate.toLocaleString('vi-VN')} {member.currency}
-                        </span>
+                      {isAdmin && (
+                        member.hourly_rate ? (
+                          <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
+                            {member.hourly_rate.toLocaleString('vi-VN')} {member.currency}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                            Chưa set lương
+                          </span>
+                        )
                       )}
                     </div>
                   </div>
@@ -2029,8 +2038,7 @@ export default function App() {
                         const uniqueDates = new Set(memberLogs.map(l => l.date));
                         const daysWorked = uniqueDates.size;
                         
-                        const totalMilliseconds = monthlySummary[member.id] || 0;
-                        const totalHours = totalMilliseconds / 3600000;
+                        const totalHours = monthlySummary[member.id] || 0;
                         const salary = totalHours * (member.hourly_rate || 0);
 
                         return (
