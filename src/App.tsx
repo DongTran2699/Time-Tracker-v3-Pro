@@ -164,6 +164,13 @@ export default function App() {
   const fetchInitialData = async () => {
     try {
       const res = await fetch('/api/members');
+      
+      // Check if response is HTML (which means API is not running/found and falling back to index.html)
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        throw new Error("API chưa được triển khai đúng (nhận được HTML thay vì JSON). Vui lòng kiểm tra lại thư mục 'functions' trên Git và đảm bảo D1 Database đã được bind.");
+      }
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`Server returned ${res.status}: ${text.substring(0, 100)}`);
