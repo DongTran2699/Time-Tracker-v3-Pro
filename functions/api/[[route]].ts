@@ -221,8 +221,28 @@ async function createMember(req: Request, env: Env) {
 
 async function updateMember(id: string, req: Request, env: Env) {
   const { name, role, email, password, hourly_rate, currency } = await req.json() as any;
-  await env.DB.prepare('UPDATE members SET name = ?, role = ?, email = ?, password = ?, hourly_rate = ?, currency = ? WHERE id = ?')
-    .bind(name, role, email, password, hourly_rate || 0, currency || 'VND', id).run();
+  
+  try {
+    await env.DB.prepare('UPDATE members SET name = ?, role = ?, email = ?, password = ?, hourly_rate = ?, currency = ? WHERE id = ?')
+      .bind(name, role, email, password, hourly_rate || 0, currency || 'VND', id).run();
+  } catch (e: any) {
+    // Lazy migration: If column missing, try to add it and retry
+    if (e.message && e.message.includes('no such column')) {
+      try {
+        await env.DB.prepare("ALTER TABLE members ADD COLUMN hourly_rate INTEGER DEFAULT 0").run();
+      } catch (err) {}
+      try {
+        await env.DB.prepare("ALTER TABLE members ADD COLUMN currency TEXT DEFAULT 'VND'").run();
+      } catch (err) {}
+      
+      // Retry update
+      await env.DB.prepare('UPDATE members SET name = ?, role = ?, email = ?, password = ?, hourly_rate = ?, currency = ? WHERE id = ?')
+        .bind(name, role, email, password, hourly_rate || 0, currency || 'VND', id).run();
+    } else {
+      throw e;
+    }
+  }
+  
   return Response.json({ id: Number(id), name, role, email, password, hourly_rate, currency });
 }
 
@@ -333,12 +353,12 @@ async function createTask(req: Request, env: Env) {
 }
 
 async function updateTask(id: string, req: Request, env: Env) {
-  const { title, description, assignee_id, deadline, priority, status } = await req.json() as any;
+  const { title, description, assignee_id, deadline, priority, status, project_id } = await req.json() as any;
   const existing: any = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
   if (!existing) return Response.json({ error: 'Task not found' }, { status: 404 });
 
   await env.DB.prepare(
-    'UPDATE tasks SET title = ?, description = ?, assignee_id = ?, deadline = ?, priority = ?, status = ? WHERE id = ?'
+    'UPDATE tasks SET title = ?, description = ?, assignee_id = ?, deadline = ?, priority = ?, status = ?, project_id = ? WHERE id = ?'
   ).bind(
     title !== undefined ? title : existing.title,
     description !== undefined ? description : existing.description,
@@ -346,6 +366,7 @@ async function updateTask(id: string, req: Request, env: Env) {
     deadline !== undefined ? deadline : existing.deadline,
     priority !== undefined ? priority : existing.priority,
     status !== undefined ? status : existing.status,
+    project_id !== undefined ? project_id : existing.project_id,
     id
   ).run();
   
@@ -380,14 +401,14 @@ async function restore(req: Request, env: Env) {
   await env.DB.prepare('DELETE FROM members').run();
   
   for (const m of members) {
-    await env.DB.prepare('INSERT INTO members (id, name, role, email, password, avatar) VALUES (?, ?, ?, ?, ?, ?)').bind(m.id, m.name, m.role, m.email || null, m.password || null, m.avatar || null).run();
+    await env.DB.prepare('INSERT INTO members (id, name, role, email, password, avatar, hourly_rate, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(m.id, m.name, m.role, m.email || null, m.password || null, m.avatar || null, m.hourly_rate || 0, m.currency || 'VND').run();
   }
   for (const l of logs) {
     await env.DB.prepare('INSERT INTO logs (id, member_id, type, timestamp, date, note) VALUES (?, ?, ?, ?, ?, ?)').bind(l.id, l.member_id || l.memberId, l.type, l.timestamp, l.date, l.note || null).run();
   }
   if (Array.isArray(tasks)) {
     for (const t of tasks) {
-      await env.DB.prepare('INSERT INTO tasks (id, title, description, assignee_id, assigner_id, deadline, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(t.id, t.title, t.description || null, t.assignee_id, t.assigner_id, t.deadline || null, t.priority || 'medium', t.status || 'pending', t.created_at).run();
+      await env.DB.prepare('INSERT INTO tasks (id, title, description, assignee_id, assigner_id, deadline, priority, status, created_at, project_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(t.id, t.title, t.description || null, t.assignee_id, t.assigner_id, t.deadline || null, t.priority || 'medium', t.status || 'pending', t.created_at, t.project_id || null).run();
     }
   }
   return Response.json({ message: 'Restore successful' });

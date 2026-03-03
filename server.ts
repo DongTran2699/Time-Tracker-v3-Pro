@@ -481,7 +481,7 @@ async function startServer() {
 
   app.put("/api/tasks/:id", async (req, res) => {
     const { id } = req.params;
-    const { title, description, assignee_id, deadline, priority, status } = req.body;
+    const { title, description, assignee_id, deadline, priority, status, project_id } = req.body;
     
     try {
       // Get existing task to merge fields
@@ -491,7 +491,7 @@ async function startServer() {
       }
 
       const result = await db.run(
-        "UPDATE tasks SET title = ?, description = ?, assignee_id = ?, deadline = ?, priority = ?, status = ? WHERE id = ?",
+        "UPDATE tasks SET title = ?, description = ?, assignee_id = ?, deadline = ?, priority = ?, status = ?, project_id = ? WHERE id = ?",
         [
           title !== undefined ? title : existingTask.title,
           description !== undefined ? description : existingTask.description,
@@ -499,6 +499,7 @@ async function startServer() {
           deadline !== undefined ? deadline : existingTask.deadline,
           priority !== undefined ? priority : existingTask.priority,
           status !== undefined ? status : existingTask.status,
+          project_id !== undefined ? project_id : existingTask.project_id,
           id
         ]
       );
@@ -594,8 +595,8 @@ async function startServer() {
       // Restore members
       for (const m of members) {
         await db.run(
-          "INSERT INTO members (id, name, role, email, password, avatar) VALUES (?, ?, ?, ?, ?, ?)",
-          [m.id, m.name, m.role, m.email || null, m.password || null, m.avatar || null]
+          "INSERT INTO members (id, name, role, email, password, avatar, hourly_rate, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          [m.id, m.name, m.role, m.email || null, m.password || null, m.avatar || null, m.hourly_rate || 0, m.currency || 'VND']
         );
       }
 
@@ -611,8 +612,8 @@ async function startServer() {
       if (Array.isArray(tasks)) {
         for (const t of tasks) {
           await db.run(
-            "INSERT INTO tasks (id, title, description, assignee_id, assigner_id, deadline, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [t.id, t.title, t.description || null, t.assignee_id, t.assigner_id, t.deadline || null, t.priority || 'medium', t.status || 'pending', t.created_at]
+            "INSERT INTO tasks (id, title, description, assignee_id, assigner_id, deadline, priority, status, created_at, project_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [t.id, t.title, t.description || null, t.assignee_id, t.assigner_id, t.deadline || null, t.priority || 'medium', t.status || 'pending', t.created_at, t.project_id || null]
           );
         }
       }
