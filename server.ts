@@ -158,6 +158,24 @@ async function initDb() {
     }
 
     try {
+      await db.run("ALTER TABLE members ADD COLUMN hourly_rate INTEGER DEFAULT 0");
+      console.log("Migration: Added hourly_rate column to members table");
+    } catch (e: any) {
+      if (!e.message.includes("duplicate column name")) {
+        console.error("Migration error (members hourly_rate):", e.message);
+      }
+    }
+
+    try {
+      await db.run("ALTER TABLE members ADD COLUMN currency TEXT DEFAULT 'VND'");
+      console.log("Migration: Added currency column to members table");
+    } catch (e: any) {
+      if (!e.message.includes("duplicate column name")) {
+        console.error("Migration error (members currency):", e.message);
+      }
+    }
+
+    try {
       await db.run("ALTER TABLE logs ADD COLUMN member_id INTEGER NOT NULL DEFAULT 1");
       console.log("Migration: Added member_id column to logs table");
     } catch (e: any) {
@@ -233,13 +251,16 @@ async function startServer() {
   });
 
   app.post("/api/members", async (req, res) => {
-    const { name, role, email, password } = req.body;
+    const { name, role, email, password, hourly_rate, currency } = req.body;
     if (!name || !role) {
       return res.status(400).json({ error: "Name and role are required" });
     }
     try {
-      const result = await db.run("INSERT INTO members (name, role, email, password) VALUES (?, ?, ?, ?)", [name, role, email, password]);
-      const newMember = { id: result.lastInsertRowid, name, role, email, password };
+      const result = await db.run(
+        "INSERT INTO members (name, role, email, password, hourly_rate, currency) VALUES (?, ?, ?, ?, ?, ?)", 
+        [name, role, email, password, hourly_rate || 0, currency || 'VND']
+      );
+      const newMember = { id: result.lastInsertRowid, name, role, email, password, hourly_rate, currency };
       res.status(201).json(newMember);
     } catch (error) {
       console.error(error);
@@ -249,16 +270,19 @@ async function startServer() {
 
   app.put("/api/members/:id", async (req, res) => {
     const { id } = req.params;
-    const { name, role, email, password } = req.body;
+    const { name, role, email, password, hourly_rate, currency } = req.body;
     if (!name || !role) {
       return res.status(400).json({ error: "Name and role are required" });
     }
     try {
-      const result = await db.run("UPDATE members SET name = ?, role = ?, email = ?, password = ? WHERE id = ?", [name, role, email, password, id]);
+      const result = await db.run(
+        "UPDATE members SET name = ?, role = ?, email = ?, password = ?, hourly_rate = ?, currency = ? WHERE id = ?", 
+        [name, role, email, password, hourly_rate || 0, currency || 'VND', id]
+      );
       if (result.changes === 0) {
         return res.status(404).json({ error: "Member not found" });
       }
-      res.json({ id: Number(id), name, role, email, password });
+      res.json({ id: Number(id), name, role, email, password, hourly_rate, currency });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Failed to update member" });

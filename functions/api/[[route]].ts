@@ -126,9 +126,20 @@ async function handleSetup(env: Env) {
       role TEXT NOT NULL,
       email TEXT,
       password TEXT,
-      avatar TEXT
+      avatar TEXT,
+      hourly_rate INTEGER DEFAULT 0,
+      currency TEXT DEFAULT 'VND'
     );
   `).run();
+
+  // Attempt to add columns for existing tables (migration)
+  try {
+    await env.DB.prepare("ALTER TABLE members ADD COLUMN hourly_rate INTEGER DEFAULT 0").run();
+  } catch (e) { /* ignore if exists */ }
+  
+  try {
+    await env.DB.prepare("ALTER TABLE members ADD COLUMN currency TEXT DEFAULT 'VND'").run();
+  } catch (e) { /* ignore if exists */ }
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS logs (
@@ -174,18 +185,18 @@ async function handleSetup(env: Env) {
 
   if (count === 0) {
     await env.DB.prepare(`
-      INSERT INTO members (name, role, email, password) VALUES 
-      ('Nguyễn Văn A', 'Developer', 'a@example.com', NULL),
-      ('Trần Thị B', 'Designer', 'b@example.com', NULL),
-      ('Lê Văn C', 'Project Manager', 'c@example.com', NULL),
-      ('Phạm Thị D', 'QA Engineer', 'd@example.com', NULL),
-      ('Hoàng Văn E', 'Backend Dev', 'e@example.com', NULL),
-      ('Vũ Thị F', 'Frontend Dev', 'f@example.com', NULL),
-      ('Đặng Văn G', 'DevOps', 'g@example.com', NULL),
-      ('Bùi Thị H', 'HR Manager', 'h@example.com', NULL),
-      ('Lý Văn I', 'Business Analyst', 'i@example.com', NULL),
-      ('Ngô Thị K', 'Marketing', 'k@example.com', NULL),
-      ('Đặng Tiến Đông', 'Owner', 'dongtb@bimhanoi.com.vn', 'catalunia2699');
+      INSERT INTO members (name, role, email, password, hourly_rate, currency) VALUES 
+      ('Nguyễn Văn A', 'Developer', 'a@example.com', NULL, 0, 'VND'),
+      ('Trần Thị B', 'Designer', 'b@example.com', NULL, 0, 'VND'),
+      ('Lê Văn C', 'Project Manager', 'c@example.com', NULL, 0, 'VND'),
+      ('Phạm Thị D', 'QA Engineer', 'd@example.com', NULL, 0, 'VND'),
+      ('Hoàng Văn E', 'Backend Dev', 'e@example.com', NULL, 0, 'VND'),
+      ('Vũ Thị F', 'Frontend Dev', 'f@example.com', NULL, 0, 'VND'),
+      ('Đặng Văn G', 'DevOps', 'g@example.com', NULL, 0, 'VND'),
+      ('Bùi Thị H', 'HR Manager', 'h@example.com', NULL, 0, 'VND'),
+      ('Lý Văn I', 'Business Analyst', 'i@example.com', NULL, 0, 'VND'),
+      ('Ngô Thị K', 'Marketing', 'k@example.com', NULL, 0, 'VND'),
+      ('Đặng Tiến Đông', 'Owner', 'dongtb@bimhanoi.com.vn', 'catalunia2699', 0, 'VND');
     `).run();
     return Response.json({ message: 'Database initialized and seeded successfully' });
   }
@@ -199,20 +210,20 @@ async function getMembers(env: Env) {
 }
 
 async function createMember(req: Request, env: Env) {
-  const { name, role, email, password } = await req.json() as any;
+  const { name, role, email, password, hourly_rate, currency } = await req.json() as any;
   if (!name || !role) return Response.json({ error: 'Name and role are required' }, { status: 400 });
   
-  const result = await env.DB.prepare('INSERT INTO members (name, role, email, password) VALUES (?, ?, ?, ?)')
-    .bind(name, role, email, password).run();
+  const result = await env.DB.prepare('INSERT INTO members (name, role, email, password, hourly_rate, currency) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(name, role, email, password, hourly_rate || 0, currency || 'VND').run();
   
-  return Response.json({ id: result.meta.last_row_id, name, role, email, password }, { status: 201 });
+  return Response.json({ id: result.meta.last_row_id, name, role, email, password, hourly_rate, currency }, { status: 201 });
 }
 
 async function updateMember(id: string, req: Request, env: Env) {
-  const { name, role, email, password } = await req.json() as any;
-  await env.DB.prepare('UPDATE members SET name = ?, role = ?, email = ?, password = ? WHERE id = ?')
-    .bind(name, role, email, password, id).run();
-  return Response.json({ id: Number(id), name, role, email, password });
+  const { name, role, email, password, hourly_rate, currency } = await req.json() as any;
+  await env.DB.prepare('UPDATE members SET name = ?, role = ?, email = ?, password = ?, hourly_rate = ?, currency = ? WHERE id = ?')
+    .bind(name, role, email, password, hourly_rate || 0, currency || 'VND', id).run();
+  return Response.json({ id: Number(id), name, role, email, password, hourly_rate, currency });
 }
 
 async function deleteMember(id: string, env: Env) {

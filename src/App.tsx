@@ -44,8 +44,8 @@ export default function App() {
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', role: '', email: '', password: '' });
-  const [addForm, setAddForm] = useState({ name: '', role: '', email: '', password: '' });
+  const [editForm, setEditForm] = useState({ name: '', role: '', email: '', password: '', hourly_rate: 0, currency: 'VND' });
+  const [addForm, setAddForm] = useState({ name: '', role: '', email: '', password: '', hourly_rate: 0, currency: 'VND' });
   
   // Note Modal State
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -417,7 +417,7 @@ export default function App() {
       setMembers(prev => [...prev, newMember]);
       setMemberStatuses(prev => ({ ...prev, [newMember.id]: 'off' }));
       setIsAddingMember(false);
-      setAddForm({ name: '', role: '', email: '', password: '' });
+      setAddForm({ name: '', role: '', email: '', password: '', hourly_rate: 0, currency: 'VND' });
     } catch (error) {
       console.error('Failed to add member:', error);
       alert('Có lỗi xảy ra khi thêm thành viên.');
@@ -663,7 +663,7 @@ export default function App() {
     const targetYear = summaryDate.getFullYear();
 
     let csvContent = '\uFEFF'; // UTF-8 BOM
-    csvContent += 'Họ và tên,Chức danh,Email,Tổng giờ công,Số ngày đi làm\n';
+    csvContent += 'Họ và tên,Chức danh,Email,Lương/Giờ,Tổng giờ công,Số ngày đi làm,Tổng Lương\n';
 
     summaryMembers.forEach(member => {
       const memberLogs = summaryLogs.filter(log => {
@@ -679,13 +679,21 @@ export default function App() {
       const uniqueDates = new Set(memberLogs.map(l => l.date));
       const daysWorked = uniqueDates.size;
       
+      const totalMilliseconds = monthlySummary[member.id] || 0;
+      const totalHours = totalMilliseconds / 3600000;
+      const hourlyRate = member.hourly_rate || 0;
+      const salary = totalHours * hourlyRate;
+      const currency = member.currency || 'VND';
+
       const name = `"${member.name.replace(/"/g, '""')}"`;
       const role = `"${member.role.replace(/"/g, '""')}"`;
       const email = `"${(member.email || '').replace(/"/g, '""')}"`;
-      const hours = `"${formatDuration(monthlySummary[member.id] || 0)}"`;
+      const rateStr = `"${hourlyRate.toLocaleString('vi-VN')} ${currency}"`;
+      const hours = `"${formatDuration(totalMilliseconds)}"`;
       const days = `"${daysWorked}"`;
+      const salaryStr = `"${salary.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} ${currency}"`;
       
-      csvContent += `${name},${role},${email},${hours},${days}\n`;
+      csvContent += `${name},${role},${email},${rateStr},${hours},${days},${salaryStr}\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -693,7 +701,7 @@ export default function App() {
     const link = document.createElement('a');
     link.href = url;
     const monthStr = summaryDate.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' }).replace('/', '-');
-    link.setAttribute('download', `Bao_Cao_Cham_Cong_${monthStr}.csv`);
+    link.setAttribute('download', `Bao_Cao_Luong_${monthStr}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1124,7 +1132,9 @@ export default function App() {
                               name: member.name, 
                               role: member.role, 
                               email: member.email || '',
-                              password: member.password || ''
+                              password: member.password || '',
+                              hourly_rate: member.hourly_rate || 0,
+                              currency: member.currency || 'VND'
                             });
                           }}
                           className="p-1 text-gray-300 hover:text-black dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100"
@@ -1134,7 +1144,14 @@ export default function App() {
                         </button>
                       )}
                     </div>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate">{member.role}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate">{member.role}</p>
+                      {isAdmin && member.hourly_rate && (
+                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
+                          {member.hourly_rate.toLocaleString('vi-VN')} {member.currency}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1991,6 +2008,9 @@ export default function App() {
                       <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Chức danh</th>
                       <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Số ngày đi làm</th>
                       <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Tổng giờ công</th>
+                      {isOwner(loggedInUser) && (
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Lương ước tính</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -2008,6 +2028,10 @@ export default function App() {
                         });
                         const uniqueDates = new Set(memberLogs.map(l => l.date));
                         const daysWorked = uniqueDates.size;
+                        
+                        const totalMilliseconds = monthlySummary[member.id] || 0;
+                        const totalHours = totalMilliseconds / 3600000;
+                        const salary = totalHours * (member.hourly_rate || 0);
 
                         return (
                           <tr key={member.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
@@ -2032,6 +2056,13 @@ export default function App() {
                                 {formatDuration(monthlySummary[member.id] || 0)}
                               </span>
                             </td>
+                            {isOwner(loggedInUser) && (
+                              <td className="px-6 py-4 text-right">
+                                <span className={`text-sm font-mono font-bold ${salary > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-300 dark:text-gray-600'}`}>
+                                  {salary.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} {member.currency || 'VND'}
+                                </span>
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
@@ -2468,15 +2499,36 @@ export default function App() {
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Mật khẩu (Nếu là Owner)</label>
-                    <input
-                      type="password"
-                      value={addForm.password}
-                      onChange={e => setAddForm(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="Mật khẩu đăng nhập"
-                      className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-4 py-3 text-sm transition-all outline-none dark:text-white"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Mật khẩu</label>
+                      <input
+                        type="password"
+                        value={addForm.password}
+                        onChange={e => setAddForm(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Mật khẩu đăng nhập"
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-4 py-3 text-sm transition-all outline-none dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Lương/Giờ</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          value={addForm.hourly_rate}
+                          onChange={e => setAddForm(prev => ({ ...prev, hourly_rate: Number(e.target.value) }))}
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-4 py-3 text-sm transition-all outline-none dark:text-white"
+                        />
+                        <select
+                          value={addForm.currency}
+                          onChange={e => setAddForm(prev => ({ ...prev, currency: e.target.value }))}
+                          className="bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-2 py-3 text-sm transition-all outline-none dark:text-white"
+                        >
+                          <option value="VND">VND</option>
+                          <option value="USD">USD</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex gap-3 pt-4">
                     <button
@@ -2548,14 +2600,36 @@ export default function App() {
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Mật khẩu (Nếu là Owner)</label>
-                    <input
-                      type="password"
-                      value={editForm.password}
-                      onChange={e => setEditForm(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-4 py-3 text-sm transition-all outline-none dark:text-white"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Mật khẩu</label>
+                      <input
+                        type="password"
+                        value={editForm.password}
+                        onChange={e => setEditForm(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Để trống nếu không đổi"
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-4 py-3 text-sm transition-all outline-none dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Lương/Giờ</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          value={editForm.hourly_rate}
+                          onChange={e => setEditForm(prev => ({ ...prev, hourly_rate: Number(e.target.value) }))}
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-4 py-3 text-sm transition-all outline-none dark:text-white"
+                        />
+                        <select
+                          value={editForm.currency}
+                          onChange={e => setEditForm(prev => ({ ...prev, currency: e.target.value }))}
+                          className="bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl px-2 py-3 text-sm transition-all outline-none dark:text-white"
+                        >
+                          <option value="VND">VND</option>
+                          <option value="USD">USD</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex gap-3 pt-4">
                     <button

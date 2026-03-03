@@ -5,6 +5,8 @@ export interface Member {
   email?: string;
   password?: string;
   avatar?: string;
+  hourly_rate?: number;
+  currency?: string;
 }
 
 export interface WorkLog {
