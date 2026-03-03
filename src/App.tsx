@@ -759,7 +759,7 @@ export default function App() {
                     setLoginError('');
                   }}
                   placeholder="VD: dongtb@bimhanoi.com.vn"
-                  className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-2xl px-6 py-4 text-sm transition-all outline-none pl-12 dark:text-white dark:placeholder-gray-500"
+                  className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-2xl px-6 py-4 text-sm transition-all outline-none pl-12 pr-20 dark:text-white dark:placeholder-gray-500"
                   required
                   disabled={showPasswordInput}
                 />
@@ -832,7 +832,7 @@ export default function App() {
           <div className="flex flex-col md:flex-row justify-between items-start gap-6">
             {/* User Info Box */}
             <div className="flex flex-col w-full md:w-auto">
-              <div className="bg-white dark:bg-gray-900 px-6 py-4 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 w-full md:min-w-[220px]">
+              <div className="bg-white dark:bg-gray-900 px-4 py-3 md:px-6 md:py-4 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 w-full md:min-w-[220px]">
                 <p className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-gray-100 leading-tight">{loggedInUser?.name}</p>
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest mt-1 leading-tight">{loggedInUser?.role}</p>
                 <p className="text-[9px] text-gray-300 dark:text-gray-600 mt-1 leading-tight">{loggedInUser?.email}</p>
@@ -953,7 +953,7 @@ export default function App() {
                   {isAdmin ? 'Chế độ Owner' : 'Chế độ Nhân viên'}
                 </button>
               </div>
-              <div className="text-5xl md:text-7xl font-mono font-light tracking-tighter text-gray-900 dark:text-gray-100 leading-none">
+              <div className="text-4xl md:text-7xl font-mono font-light tracking-tighter text-gray-900 dark:text-gray-100 leading-none">
                 {formatTime(currentTime)}
               </div>
             </div>
@@ -964,11 +964,11 @@ export default function App() {
             <div>
               {selectedMember && activeTab !== 'members' ? (
                 <div className="mb-3">
-                  <h1 className="text-3xl md:text-4xl font-light tracking-tighter dark:text-white">{selectedMember.name}</h1>
+                  <h1 className="text-2xl md:text-4xl font-light tracking-tighter dark:text-white">{selectedMember.name}</h1>
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-[0.2em] mt-1">{selectedMember.role}</p>
                 </div>
               ) : (
-                <h1 className="text-5xl md:text-7xl font-light tracking-tighter mb-3 dark:text-white">WorkTime</h1>
+                <h1 className="text-4xl md:text-7xl font-light tracking-tighter mb-3 dark:text-white">WorkTime</h1>
               )}
               <p className="text-gray-400 dark:text-gray-500 font-bold uppercase text-[10px] tracking-[0.2em] flex items-center gap-2">
                 <Calendar size={12} className="opacity-50" />
@@ -980,7 +980,7 @@ export default function App() {
               <div className="flex bg-white dark:bg-gray-900 p-1 rounded-2xl shadow-sm border border-black/5 dark:border-white/5">
                 <button
                   onClick={() => setActiveTab('dashboard')}
-                  className={`px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  className={`px-2 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                     activeTab === 'dashboard' ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/10 dark:shadow-white/10' : 'text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white'
                   }`}
                   title="Dashboard"
@@ -989,7 +989,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setActiveTab('track')}
-                  className={`px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  className={`px-2 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                     activeTab === 'track' ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/10 dark:shadow-white/10' : 'text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white'
                   }`}
                   title="Chấm công"
@@ -998,7 +998,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setActiveTab('tasks')}
-                  className={`px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  className={`px-2 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                     activeTab === 'tasks' ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/10 dark:shadow-white/10' : 'text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white'
                   }`}
                   title="Giao việc"
@@ -1007,7 +1007,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setActiveTab('members')}
-                  className={`px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  className={`px-2 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                     activeTab === 'members' ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/10 dark:shadow-white/10' : 'text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white'
                   }`}
                   title="Thành viên"
@@ -1018,7 +1018,7 @@ export default function App() {
                 <div className="relative z-50">
                   <button
                     onClick={() => setShowReportMenu(!showReportMenu)}
-                    className={`px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                    className={`px-2 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                       ['summary', 'archive'].includes(activeTab) ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/10 dark:shadow-white/10' : 'text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white'
                     }`}
                     title="Báo cáo"
@@ -1764,20 +1764,20 @@ export default function App() {
               ) : (
                 <>
                   <div className="md:col-span-2 space-y-8">
-                    <section className="bg-white dark:bg-gray-900 rounded-[2rem] p-10 shadow-sm border border-black/5 dark:border-white/5 relative overflow-hidden">
+                    <section className="bg-white dark:bg-gray-900 rounded-[2rem] p-6 md:p-10 shadow-sm border border-black/5 dark:border-white/5 relative overflow-hidden">
                       <div className="relative z-10">
                         <div className="flex items-center justify-between mb-12">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center">
                               <User size={24} />
                             </div>
                             <div>
-                              <h2 className="text-2xl font-light dark:text-white">{selectedMember.name}</h2>
+                              <h2 className="text-xl md:text-2xl font-light dark:text-white">{selectedMember.name}</h2>
                               <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">{selectedMember.role}</p>
                               {selectedMember.email && <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-1">{selectedMember.email}</p>}
                             </div>
                           </div>
-                          <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] ${
+                          <div className={`flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] ${
                             status === 'working' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50' : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-700'
                           }`}>
                             <div className={`w-1.5 h-1.5 rounded-full ${status === 'working' ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-600'}`} />
