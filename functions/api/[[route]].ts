@@ -28,6 +28,9 @@ const withCors = (response: Response) => {
 // Handle OPTIONS requests for CORS preflight
 router.options('*', () => new Response(null, { headers: corsHeaders }));
 
+// Health Check Route (No DB required)
+router.get('/api/ping', () => Response.json({ status: 'ok', message: 'Function is running' }));
+
 // Setup Route (Run once to initialize DB)
 router.get('/api/setup', async (req, env: Env) => {
   try {
